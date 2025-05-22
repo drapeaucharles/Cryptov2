@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.policies import ActorCriticPolicy
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from stable_baselines3.common.distributions import DiagGaussianDistribution
 
 
 class MultiOutputExtractor(BaseFeaturesExtractor):
@@ -26,24 +27,23 @@ class CustomMultiOutputPolicy(ActorCriticPolicy):
             **kwargs
         )
 
-        # Replace action_net to produce 3 continuous outputs: action_type (0–2), SL, TP
+        # Replace default distribution with Gaussian for continuous 3D action
+        self.action_dist = DiagGaussianDistribution(self.action_space.shape[0])
+
         last_layer_dim = self.mlp_extractor.policy_net[-1].out_features
-        self.action_net = nn.Sequential(
-            nn.Linear(last_layer_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 3),
-            nn.Sigmoid()  # Outputs in [0, 1] range — will be scaled by environment
-        )
+        self.mu = nn.Linear(last_layer_dim, self.action_space.shape[0])
+        self.log_std = nn.Parameter(torch.zeros(self.action_space.shape[0]))
 
     def forward(self, obs, deterministic=False):
         features = self.extract_features(obs)
         latent_pi, latent_vf = self.mlp_extractor(features)
 
-        action_logits = self.action_net(latent_pi)
-        actions = action_logits  # Continuous output
-        values = self.value_net(latent_vf)
-        log_prob = None  # PPO will handle
+        mean_actions = self.mu(latent_pi)
+        distribution = self.action_dist.proba_distribution(mean_actions, self.log_std)
+        actions = distribution.get_actions(deterministic=deterministic)
+        log_prob = distribution.log_prob(actions)
 
+        values = self.value_net(latent_vf)
         return actions, values, log_prob
 
     def _predict(self, obs, deterministic=False):

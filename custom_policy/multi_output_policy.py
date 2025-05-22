@@ -27,12 +27,11 @@ class CustomMultiOutputPolicy(ActorCriticPolicy):
             **kwargs
         )
 
-        # Replace default distribution with Gaussian for continuous 3D action
         self.action_dist = DiagGaussianDistribution(self.action_space.shape[0])
 
         last_layer_dim = self.mlp_extractor.policy_net[-1].out_features
         self.mu = nn.Linear(last_layer_dim, self.action_space.shape[0])
-        self.log_std = nn.Parameter(torch.zeros(self.action_space.shape[0]))
+        self.log_std = nn.Parameter(torch.ones(self.action_space.shape[0]) * -0.5)
 
     def forward(self, obs, deterministic=False):
         features = self.extract_features(obs)

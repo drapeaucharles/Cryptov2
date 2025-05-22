@@ -1,7 +1,7 @@
-import gym
+import gymnasium as gym
 import numpy as np
 import pandas as pd
-from gym import spaces
+from gymnasium import spaces
 
 class AdvancedTradingEnv(gym.Env):
     def __init__(self, df_dict, initial_balance=1000, max_concurrent_trades=3):

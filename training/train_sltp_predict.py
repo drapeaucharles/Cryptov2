@@ -1,13 +1,9 @@
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import os
 import torch
 import pandas as pd
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
-from custom_policy.multi_output_policy import CustomMultiOutputPolicy
+from policy.multi_output_policy import CustomMultiOutputPolicy
 from environment.advanced_trading_env_sltp import AdvancedTradingEnv
 
 def load_data():

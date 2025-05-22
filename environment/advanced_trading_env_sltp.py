@@ -2,9 +2,11 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 from gymnasium import spaces
+import csv
+import os
 
 class AdvancedTradingEnv(gym.Env):
-    def __init__(self, df_dict, initial_balance=1000, max_concurrent_trades=3):
+    def __init__(self, df_dict, initial_balance=1000, max_concurrent_trades=3, log_path="logs/trades.csv"):
         super(AdvancedTradingEnv, self).__init__()
 
         self.df_dict = df_dict  # Dict of synced dataframes for 15m, 1h, 2h, 4h
@@ -18,6 +20,12 @@ class AdvancedTradingEnv(gym.Env):
         self.min_sl = 0.002  # 0.2%
         self.max_sl = 0.05   # 5%
 
+        self.log_path = log_path
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(self.log_path, mode='w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Step', 'EntryPrice', 'SL', 'TP', 'ExitPrice', 'PnL', 'Reason'])
+
         self.action_space = spaces.Dict({
             "action": spaces.Discrete(3),  # 0 = Hold, 1 = Buy, 2 = Sell
             "sl": spaces.Box(self.min_sl, self.max_sl, shape=(1,), dtype=np.float32),
@@ -29,7 +37,7 @@ class AdvancedTradingEnv(gym.Env):
 
         self.reset()
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
         self.balance = self.initial_balance
         self.net_worth = self.initial_balance
         self.trades = []
@@ -37,7 +45,7 @@ class AdvancedTradingEnv(gym.Env):
         self.resting = 0
         self.sl_count = 0
 
-        return self._next_observation()
+        return self._next_observation(), {}
 
     def _next_observation(self):
         obs = []
@@ -71,7 +79,9 @@ class AdvancedTradingEnv(gym.Env):
                 "sl": price * (1 - direction * sl),
                 "tp": price * (1 + direction * tp),
                 "dir": direction,
-                "open_step": self.current_step
+                "open_step": self.current_step,
+                "sl_val": sl,
+                "tp_val": tp
             })
 
         closed_trades = []
@@ -102,11 +112,18 @@ class AdvancedTradingEnv(gym.Env):
             self.balance += pnl
             closed_trades.append(trade)
 
+            with open(self.log_path, mode='a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    trade['open_step'], trade['entry'], trade['sl_val'], trade['tp_val'],
+                    exit_price, pnl, exit_reason
+                ])
+
         for trade in closed_trades:
             self.trades.remove(trade)
 
         if self.sl_count >= 5:
-            self.resting = 96  # skip a day (15m candles)
+            self.resting = 96
             self.sl_count = 0
 
         self.net_worth = self.balance + sum(

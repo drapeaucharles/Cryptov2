@@ -33,7 +33,7 @@ class AdvancedTradingEnv(gym.Env):
 
         self.reset()
 
-    def reset(self, seed=None, options=None):
+    def reset(self):
         self.balance = self.initial_balance
         self.net_worth = self.initial_balance
         self.trades = []
@@ -41,7 +41,7 @@ class AdvancedTradingEnv(gym.Env):
         self.resting = 0
         self.sl_count = 0
 
-        return self._next_observation(), {}
+        return self._next_observation()
 
     def _next_observation(self):
         obs = []

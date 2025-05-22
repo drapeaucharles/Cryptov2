@@ -29,7 +29,7 @@ class CustomMultiOutputPolicy(ActorCriticPolicy):
 
         self.action_dist = DiagGaussianDistribution(self.action_space.shape[0])
 
-        last_layer_dim = self.mlp_extractor.policy_net[-1].out_features
+        last_layer_dim = self.mlp_extractor.latent_dim_pi
         self.mu = nn.Linear(last_layer_dim, self.action_space.shape[0])
         self.log_std = nn.Parameter(torch.ones(self.action_space.shape[0]) * -0.5)
 

@@ -7,16 +7,15 @@ from policy.multi_output_policy import CustomMultiOutputPolicy
 from environment.advanced_trading_env_sltp import AdvancedTradingEnv
 
 def load_data():
-    # Example structure — replace with actual preprocessing logic
-    df_15m = pd.read_csv('data/BTCUSDT_15m.csv')
-    df_1h = pd.read_csv('data/BTCUSDT_1h.csv')
-    df_2h = pd.read_csv('data/BTCUSDT_2h.csv')
-    df_4h = pd.read_csv('data/BTCUSDT_4h.csv')
+    df_15m = pd.read_csv('data/btc_15m_features.csv')
+    df_1h = pd.read_csv('data/btc_1h_features.csv')
+    df_2h = pd.read_csv('data/btc_2h_features.csv')
+    df_4h = pd.read_csv('data/btc_4h_features.csv')
     return {'15m': df_15m, '1h': df_1h, '2h': df_2h, '4h': df_4h}
 
 def main():
     df_dict = load_data()
-    env = AdvancedTradingEnv(df_dict)
+    env = AdvancedTradingEnv(df_dict, log_path="logs/trades.csv")
 
     model = PPO(
         policy=CustomMultiOutputPolicy,

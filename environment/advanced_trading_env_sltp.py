@@ -50,7 +50,9 @@ class AdvancedTradingEnv(gym.Env):
     def _next_observation(self):
         obs = []
         for df in self.df_dict.values():
-            obs.extend(df.iloc[self.current_step].values)
+            row = df.iloc[self.current_step]
+            numeric_values = [v for v in row.values if isinstance(v, (int, float, np.integer, np.floating))]
+            obs.extend(numeric_values)
         return np.array(obs, dtype=np.float32)
 
     def step(self, action):

@@ -26,11 +26,11 @@ class AdvancedTradingEnv(gym.Env):
             writer = csv.writer(f)
             writer.writerow(['Step', 'EntryPrice', 'SL', 'TP', 'ExitPrice', 'PnL', 'Reason'])
 
-        self.action_space = spaces.Dict({
-            "action": spaces.Discrete(3),  # 0 = Hold, 1 = Buy, 2 = Sell
-            "sl": spaces.Box(self.min_sl, self.max_sl, shape=(1,), dtype=np.float32),
-            "tp": spaces.Box(self.min_sl * 2, self.max_sl * 3, shape=(1,), dtype=np.float32)
-        })
+    self.action_space = spaces.Box(
+        low=np.array([0.0, self.min_sl, self.min_sl * 2]),
+        high=np.array([2.0, self.max_sl, self.max_sl * 3]),
+        dtype=np.float32
+    )
 
         obs_len = sum([df.shape[1] for df in df_dict.values()])
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_len,), dtype=np.float32)
@@ -64,9 +64,9 @@ class AdvancedTradingEnv(gym.Env):
             self.current_step += 1
             return self._next_observation(), 0, False, {}
 
-        a_type = action['action']
-        sl = float(action['sl'])
-        tp = float(action['tp'])
+        a_type = int(round(action[0]))
+        sl = float(action[1])
+        tp = float(action[2])
 
         price = self.df_dict['15m'].iloc[self.current_step]['close']
 

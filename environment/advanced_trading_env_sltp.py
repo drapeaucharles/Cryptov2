@@ -9,16 +9,16 @@ class AdvancedTradingEnv(gym.Env):
     def __init__(self, df_dict, initial_balance=1000, max_concurrent_trades=3, log_path="logs/trades.csv"):
         super(AdvancedTradingEnv, self).__init__()
 
-        self.df_dict = df_dict  # Dict of synced dataframes for 15m, 1h, 2h, 4h
+        self.df_dict = df_dict
         self.initial_balance = initial_balance
         self.max_trades = max_concurrent_trades
 
-        self.fee = 0.0004  # 0.04%
+        self.fee = 0.0004
         self.leverage = 10
-        self.max_risk = 0.01  # Max 1% of capital per trade
+        self.max_risk = 0.01
 
-        self.min_sl = 0.002  # 0.2%
-        self.max_sl = 0.05   # 5%
+        self.min_sl = 0.002
+        self.max_sl = 0.05
 
         self.log_path = log_path
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -26,11 +26,12 @@ class AdvancedTradingEnv(gym.Env):
             writer = csv.writer(f)
             writer.writerow(['Step', 'EntryPrice', 'SL', 'TP', 'ExitPrice', 'PnL', 'Reason'])
 
-    self.action_space = spaces.Box(
-        low=np.array([0.0, self.min_sl, self.min_sl * 2]),
-        high=np.array([2.0, self.max_sl, self.max_sl * 3]),
-        dtype=np.float32
-    )
+        # Flattened Box action space
+        self.action_space = spaces.Box(
+            low=np.array([0.0, self.min_sl, self.min_sl * 2]),
+            high=np.array([2.0, self.max_sl, self.max_sl * 3]),
+            dtype=np.float32
+        )
 
         obs_len = sum([df.shape[1] for df in df_dict.values()])
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_len,), dtype=np.float32)
@@ -41,7 +42,7 @@ class AdvancedTradingEnv(gym.Env):
         self.balance = self.initial_balance
         self.net_worth = self.initial_balance
         self.trades = []
-        self.current_step = 100  # Start after indicators have enough data
+        self.current_step = 100
         self.resting = 0
         self.sl_count = 0
 

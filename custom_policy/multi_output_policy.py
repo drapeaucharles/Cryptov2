@@ -1,7 +1,7 @@
+import torch
+import torch.nn as nn
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.policies import ActorCriticPolicy
-from torch import nn
-import torch
 
 
 class MultiOutputExtractor(BaseFeaturesExtractor):
@@ -26,31 +26,26 @@ class CustomMultiOutputPolicy(ActorCriticPolicy):
             **kwargs
         )
 
-        # Override action_net to produce multi-output head
-        self.action_logits = nn.Linear(self.mlp_extractor.policy_net[-1].out_features, 3)  # Discrete: Buy/Sell/Hold
-        self.sl_output = nn.Sequential(
-            nn.Linear(self.mlp_extractor.policy_net[-1].out_features, 1),
-            nn.Sigmoid()  # Output between 0 and 1, scale later
-        )
-        self.tp_output = nn.Sequential(
-            nn.Linear(self.mlp_extractor.policy_net[-1].out_features, 1),
-            nn.Sigmoid()
+        # Replace action_net to produce 3 continuous outputs: action_type (0–2), SL, TP
+        last_layer_dim = self.mlp_extractor.policy_net[-1].out_features
+        self.action_net = nn.Sequential(
+            nn.Linear(last_layer_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 3),
+            nn.Sigmoid()  # Outputs in [0, 1] range — will be scaled by environment
         )
 
     def forward(self, obs, deterministic=False):
         features = self.extract_features(obs)
         latent_pi, latent_vf = self.mlp_extractor(features)
 
-        action_logits = self.action_logits(latent_pi)
-        sl_raw = self.sl_output(latent_pi)
-        tp_raw = self.tp_output(latent_pi)
+        action_logits = self.action_net(latent_pi)
+        actions = action_logits  # Continuous output
+        values = self.value_net(latent_vf)
+        log_prob = None  # PPO will handle
 
-        distribution = self._get_action_dist_from_latent(action_logits)
-        actions = distribution.get_actions(deterministic=deterministic)
-        log_prob = distribution.log_prob(actions)
-
-        return actions, log_prob, self.value_net(latent_vf), {'sl': sl_raw, 'tp': tp_raw}
+        return actions, values, log_prob
 
     def _predict(self, obs, deterministic=False):
-        actions, _, _, _ = self.forward(obs, deterministic)
+        actions, _, _ = self.forward(obs, deterministic)
         return actions

@@ -10,6 +10,9 @@ class AdvancedTradingEnv(gym.Env):
         super(AdvancedTradingEnv, self).__init__()
 
         self.df_dict = df_dict
+        for key in self.df_dict:
+            self.df_dict[key] = self.df_dict[key].select_dtypes(include=[np.number])
+
         self.initial_balance = initial_balance
         self.max_trades = max_concurrent_trades
 
@@ -26,14 +29,16 @@ class AdvancedTradingEnv(gym.Env):
             writer = csv.writer(f)
             writer.writerow(['Step', 'EntryPrice', 'SL', 'TP', 'ExitPrice', 'PnL', 'Reason'])
 
-        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
-
         obs_len = sum([df.shape[1] for df in df_dict.values()])
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_len,), dtype=np.float32)
 
+        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
+
         self.reset()
 
-    def reset(self):
+    def reset(self, *, seed=None, options=None):
+        super().reset(seed=seed)
+
         self.balance = self.initial_balance
         self.net_worth = self.initial_balance
         self.trades = []
@@ -41,14 +46,14 @@ class AdvancedTradingEnv(gym.Env):
         self.resting = 0
         self.sl_count = 0
 
-        return self._next_observation()
+        obs = self._next_observation()
+        return obs, {}
 
     def _next_observation(self):
         obs = []
         for df in self.df_dict.values():
             row = df.iloc[self.current_step]
-            numeric_values = [v for v in row.values if isinstance(v, (int, float, np.integer, np.floating))]
-            obs.extend(numeric_values)
+            obs.extend(row.select_dtypes(include=[np.number]).values)
         return np.array(obs, dtype=np.float32)
 
     def step(self, action):
@@ -58,7 +63,8 @@ class AdvancedTradingEnv(gym.Env):
         if self.resting > 0:
             self.resting -= 1
             self.current_step += 1
-            return self._next_observation(), 0, False, {}
+            obs = self._next_observation()
+            return obs, 0, False, {}
 
         a_type = int(round((action[0] + 1) * 1.0))
         sl = ((action[1] + 1) / 2) * (self.max_sl - self.min_sl) + self.min_sl
@@ -133,4 +139,5 @@ class AdvancedTradingEnv(gym.Env):
         if self.current_step >= len(self.df_dict['15m']) - 1:
             done = True
 
-        return self._next_observation(), reward, done, {}
+        obs = self._next_observation()
+        return obs, reward, done, {}

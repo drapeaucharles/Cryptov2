@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import pandas as pd
-from gym import spaces
+from gymnasium import spaces
 import csv
 import os
 

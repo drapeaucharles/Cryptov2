@@ -20,7 +20,8 @@ def analyze_trades(log_file='logs/trades.csv'):
     print(f"Total trades: {total_trades}")
     print(f"Win rate: {len(win_trades) / total_trades * 100:.2f}%")
     print(f"Average SL: {avg_sl:.4f}, Average TP: {avg_tp:.4f}")
-    print(f"Profit Factor: {win_trades['PnL'].sum() / abs(lose_trades['PnL'].sum()):.2f}")
+    profit_factor = win_trades['PnL'].sum() / abs(lose_trades['PnL'].sum()) if not lose_trades.empty else float('inf')
+    print(f"Profit Factor: {profit_factor:.2f}")
 
 if __name__ == '__main__':
     analyze_trades()

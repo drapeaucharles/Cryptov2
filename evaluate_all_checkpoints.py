@@ -2,8 +2,8 @@ import os
 import torch
 import pandas as pd
 from stable_baselines3 import PPO
-from policy.multi_output_policy import CustomMultiOutputPolicy
-from environment.advanced_trading_env_sltp import AdvancedTradingEnv
+from multi_output_policy import CustomMultiOutputPolicy
+from advanced_trading_env_sltp import AdvancedTradingEnv
 
 def load_data():
     df_15m = pd.read_csv('data/BTCUSDT_15m.csv')
@@ -24,11 +24,7 @@ def evaluate_model(model_path):
 
     while not done:
         action, _ = model.predict(obs)
-        obs, reward, done, _ = env.step({
-            'action': action,
-            'sl': torch.tensor([0.01]),
-            'tp': torch.tensor([0.03])
-        })
+        obs, reward, done, _ = env.step(action)
         net_worths.append(env.net_worth)
         trades_count = len(env.trades)
 

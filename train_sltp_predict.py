@@ -6,9 +6,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import pandas as pd
 from stable_baselines3 import PPO
+from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
-from multi_output_policy import CustomMultiOutputPolicy
-from advanced_trading_env_sltp import AdvancedTradingEnv
+from custom_policy.multi_output_policy import CustomMultiOutputPolicy
+from environment.advanced_trading_env_sltp import AdvancedTradingEnv
 
 def load_data():
     df_15m = pd.read_csv('data/btc_15m_features.csv')
@@ -19,7 +21,7 @@ def load_data():
 
 def main():
     df_dict = load_data()
-    env = AdvancedTradingEnv(df_dict, log_path="logs/trades.csv")
+    env = DummyVecEnv([lambda: Monitor(AdvancedTradingEnv(df_dict, log_path="logs/trades.csv"))])
 
     model = PPO(
         policy=CustomMultiOutputPolicy,

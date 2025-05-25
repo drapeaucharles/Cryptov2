@@ -52,8 +52,8 @@ class AdvancedTradingEnv(gym.Env):
     def _next_observation(self):
         obs = []
         for df in self.df_dict.values():
-            row = df.iloc[self.current_step].values
-            obs.extend(row)
+            row = df.iloc[self.current_step]
+            obs.extend(row.values)
         return np.array(obs, dtype=np.float32)
 
     def step(self, action):
@@ -141,5 +141,5 @@ class AdvancedTradingEnv(gym.Env):
 
         obs = self._next_observation()
         terminated = done
-        truncated = False  # or add custom truncation logic if needed
+        truncated = False
         return obs, reward, terminated, truncated, {}

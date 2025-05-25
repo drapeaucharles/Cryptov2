@@ -9,8 +9,8 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
-from custom_policy.multi_output_policy import CustomMultiOutputPolicy
-from environment.advanced_trading_env_sltp import AdvancedTradingEnv
+from multi_output_policy import CustomMultiOutputPolicy
+from advanced_trading_env_sltp import AdvancedTradingEnv
 
 def load_data():
     df_15m = pd.read_csv('data/btc_15m_features.csv')

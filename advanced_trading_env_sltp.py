@@ -140,4 +140,6 @@ class AdvancedTradingEnv(gym.Env):
             done = True
 
         obs = self._next_observation()
-        return obs, reward, done, {}
+        terminated = done
+        truncated = False  # or add custom truncation logic if needed
+        return obs, reward, terminated, truncated, {}

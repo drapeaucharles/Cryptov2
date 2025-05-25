@@ -2,8 +2,8 @@ import os
 import torch
 import pandas as pd
 from stable_baselines3 import PPO
-from policy.multi_output_policy import CustomMultiOutputPolicy
-from environment.advanced_trading_env_sltp import AdvancedTradingEnv
+from multi_output_policy import CustomMultiOutputPolicy
+from advanced_trading_env_sltp import AdvancedTradingEnv
 
 def load_data():
     df_15m = pd.read_csv('data/BTCUSDT_15m.csv')
